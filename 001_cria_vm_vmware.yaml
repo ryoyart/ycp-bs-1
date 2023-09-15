@@ -1,1 +1,165 @@
-#aadsadas
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  namespace: default
+  name: Solicita criação de VM-Linux para AWX OnPremise
+  title: Formulário de solicitação de VM Linux
+  description: >
+    A Criação de Microsserviço em Python refere-se ao desenvolvimento de aplicações distribuídas compostas por pequenos, independentes e especializados componentes, conhecidos como microsserviços, utilizando a linguagem de programação Python. Essa abordagem arquitetônica busca descompor um sistema complexo em partes menores e mais gerenciáveis, cada uma responsável por uma função específica. Os microsserviços comunicam-se entre si através de protocolos padronizados, como HTTP ou gRPC, e podem ser implantados e escalados de forma independente. A escolha do Python para a criação desses microsserviços oferece vantagens como produtividade elevada, devido à sua sintaxe limpa e expressiva, além de uma vasta biblioteca padrão e uma comunidade ativa que disponibiliza uma ampla gama de recursos e frameworks para facilitar o desenvolvimento e manutenção desses serviços distribuídos.
+spec:
+  owner: user:guest
+  type: resource
+
+  parameters:
+    - title: Informacões sobre o solicitante
+      required:
+        - nome
+        - email
+      properties:
+        nome:
+          title: Nome do líder técnico da área*
+          type: string
+          description: Insira o nome do líder técnico.
+          ui:autofocus: true
+        email:
+          title: E-mail do líder técnico*
+          type: string
+          description: Insira o nome do líder técnico.
+          ui:autofocus: true
+
+    - title: Selecione o ambiente AWS
+      properties:
+        environment:
+          title: Selecione o ambiente
+          type: array
+          items:
+            type: string
+            enum:
+              - production
+              - staging
+              - development
+          uniqueItems: true
+          ui:widget: checkboxes
+        basecode:
+          title: Defina a base do código do microsserviço
+          type: string
+          description: Essa POC está funcionando somente para Python
+          default: "Python"
+          enum:
+            - "python"
+            - "nodejs"
+            - "typescript"
+            - "go"
+            - "aws-exec-read"
+            - "log-delivery-write"
+          enumNames:
+            - "Python 3.0"
+            - "Node JS"
+            - "Typescript"
+            - "GO"
+        region:
+          title: Escolha a região
+          type: string
+          description: Região na AWS a qual o ambiente será configurado
+          default: us-east-1
+          enum:
+            - af-south-1
+            - ap-east-1
+            - ap-south-1
+            - ap-northeast-3
+            - ap-northeast-2
+            - ap-southeast-1
+            - ap-southeast-2
+            - ap-northeast-1
+            - ca-central-1
+            - eu-central-1
+            - eu-west-1
+            - eu-west-2
+            - eu-south-1
+            - eu-west-3
+            - eu-north-1
+            - sa-east-1
+            - us-gov-west-1
+            - us-east-1
+            - us-east-2
+            - us-west-1
+            - us-west-2
+          enumNames:
+            - África (Cidade do Cabo) - af-south-1
+            - Ásia-Pacífico (Hong Kong) - ap-east-1
+            - Ásia-Pacífico (Mumbai) - ap-south-1
+            - Ásia-Pacífico (Osaka-Local) - ap-northeast-3
+            - Ásia-Pacífico (Seoul) - ap-northeast-2
+            - Ásia-Pacífico (Cingapura) - ap-southeast-1
+            - Ásia-Pacífico (Sydney) - ap-southeast-2
+            - Ásia-Pacífico (Tóquio) - ap-northeast-1
+            - Canadá (Central) - ca-central-1
+            - Europa (Frankfurt) - eu-central-1
+            - Europa (Irlanda) - eu-west-1
+            - Europa (Londres) - eu-west-2
+            - Europa (Milão) - eu-south-1
+            - Europa (Paris) - eu-west-3
+            - Europa (Estocolmo) - eu-north-1
+            - América do Sul (São Paulo) - sa-east-1
+            - AWS GovCloud (EUA) - us-gov-west-1
+            - Leste dos EUA (Norte da Virgínia) - us-east-1
+            - Leste dos EUA (Ohio) - us-east-2
+            - Oeste dos EUA (Norte da Califórnia) - us-west-1
+            - Oeste dos EUA (Oregon) - us-west-2
+    - title: Defina as configurações do ambiente
+      properties:
+        microsservico:
+          title: Nome do microsservico
+          type: string
+          description: Insira um nome para a criação do microsserviço
+          ui:autofocus: true
+        tag:
+          title: Tag da imagem
+          type: string
+          description: Insira uma tag para sua imagem
+          ui:autofocus: true
+        
+  steps:
+    - id: step2
+      name: Log message
+      action: debug:log
+    - id: fetchpo9
+      name: Template AWS MS PYTHON
+      action: fetch:template
+      input:
+        url: ./
+        values:
+          microsservico: "\"${{ parameters.microsservico }}\""
+          nome: "\"${{parameters.nome }}\""
+          email: "\"${{parameters.email }}\""
+          region: "\"${{ parameters.region }}\""
+          basecode: "\"${{ parameters.basecode }}\""
+          tag: "\"${{ parameters.tag }}\""
+          microsservico_nq: ${{ parameters.microsservico }}
+          nome_nq: ${{parameters.nome }}
+          email_nq: ${{parameters.email }}
+          region_nq: ${{ parameters.region }}
+          basecode_nq: ${{ parameters.basecode }}
+          tag_nq: ${{ parameters.tag }}
+          role_to_assume: '"arn:aws:iam::945314604561:role/ic-telefonica-openid-role"'
+          role_session_name: '"ic-telefonica-openid-role"'
+          sonar_token: '"edd2ae9a20b1ba21d9ef8ec002151ad9aee668dd"'
+          github_token: ${{ values.GITHUB_TOKEN }} 
+    - id: publish
+      name: Publish
+      action: publish:github
+      input:
+        allowedHosts:
+          - github.com
+        description: This is ${{ parameters.microsservico }}
+        repoUrl: github.com?owner=pocacc&repo=${{ parameters.microsservico }}
+        RepoVisibility: public
+        branchName: main
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}
